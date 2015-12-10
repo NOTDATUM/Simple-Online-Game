@@ -1,4 +1,4 @@
-# Simple-Online-Game
+# Simple-Online-Game TO DO LIST
 
 ### Server Mock 객체 개발
 - 담당자 : ACE
