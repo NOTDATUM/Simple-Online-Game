@@ -1,7 +1,58 @@
 (function() {
 	'use strict';
 	
-	var initialize, Game, Server, Sprite, Painter, Actors, U_PAINTER, D_PAINTER, L_PAINTER, R_PAINTER, A_PAINTER;
+	var
+	CHARACTER_SIZE = 96,
+	
+	initialize, sog, Game, Server, Sprite, Painter, Actors, PainterFactory,
+	
+	moveUp = new Image( CHARACTER_SIZE, CHARACTER_SIZE ),
+	moveDown = new Image( CHARACTER_SIZE, CHARACTER_SIZE ),
+	moveLeft = new Image( CHARACTER_SIZE, CHARACTER_SIZE ),
+	moveRight = new Image( CHARACTER_SIZE, CHARACTER_SIZE ),
+	attack = new Image( CHARACTER_SIZE, CHARACTER_SIZE ),
+	
+	activeDown = [
+		{left: 0, top: 0, width: 1024, height: 1024},
+		{left: 1024, top: 0, width: 1024, height: 1024},
+		{left: 2048, top: 0, width: 1024, height: 1024}
+	],
+	activeUp = [
+		{left: 0, top: 0, width: 1024, height: 1024},
+		{left: 1024, top: 0, width: 1024, height: 1024},
+		{left: 2048, top: 0, width: 1024, height: 1024}
+	],
+	activeRight = [
+		{left: 0, top: 0, width: 1024, height: 1024},
+		{left: 1024, top: 0, width: 1024, height: 1024},
+		{left: 2048, top: 0, width: 1024, height: 1024},
+		{left: 3072, top: 0, width: 1024, height: 1024},
+		{left: 4096, top: 0, width: 1024, height: 1024},
+		{left: 5120, top: 0, width: 1024, height: 1024},
+		{left: 6144, top: 0, width: 1024, height: 1024},
+		{left: 7168, top: 0, width: 1024, height: 1024}
+	],
+	activeLeft = [
+		{left: 0, top: 0, width: 1024, height: 1024},
+		{left: 1024, top: 0, width: 1024, height: 1024},
+		{left: 2048, top: 0, width: 1024, height: 1024},
+		{left: 3072, top: 0, width: 1024, height: 1024},
+		{left: 4096, top: 0, width: 1024, height: 1024},
+		{left: 5120, top: 0, width: 1024, height: 1024},
+		{left: 6144, top: 0, width: 1024, height: 1024},
+		{left: 7168, top: 0, width: 1024, height: 1024}
+	],
+	activeAttack = [
+		{left: 0, top: 0, width: 512, height: 512},
+		{left: 512, top: 0, width: 512, height: 512},
+		{left: 1024, top: 0, width: 512, height: 512},
+		{left: 1536, top: 0, width: 512, height: 512},
+		{left: 2048, top: 0, width: 512, height: 512},
+		{left: 2560, top: 0, width: 512, height: 512},
+		{left: 3072, top: 0, width: 512, height: 512},
+		{left: 3584, top: 0, width: 512, height: 512}
+	]
+	;
 	
 	Game = function( $params ) {
 		this.context = $params.context;
@@ -27,7 +78,7 @@
 
 		if ( data.p2 ) {
 			if ( !this.sprite.p2 ) {
-				this.sprite.p2 = new Sprite( D_PAINTER );
+				this.sprite.p2 = new Sprite( PainterFactory.create( PainterFactory.DOWN ) );
 			}
 			this.sprite.p2.update( data.p2, $time );
 			this.sprite.p2.paint( this.context );
@@ -40,17 +91,20 @@
 		this.host = $params.host;
 		this.dataUrl = $params.dataUrl;
 		this.registerUrl = $params.registerUrl;
+		
+		this.tmp = {};
 	};
 	
 	Server.prototype.data = function() {
-		return {
-			p1 : {},
-			p2 : {}
-		};
+		return this.tmp;
 	};
 	
 	Server.prototype.register = function( $room, $uid ) {
 		
+	};
+	
+	Server.prototype.update = function( $data ) {
+		this.tmp.p1 = $data;
 	};
 	
 	Sprite = function( $painter, $actors ) {
@@ -68,6 +122,10 @@
 		for ( var i in this.actors ) {
 			this.actors[ i ].execute( this, $data, $time );
 		}
+	};
+	
+	Sprite.prototype.advance = function() {
+		this.painter.advance();
 	};
 	
 	Painter = function( $image, $active ) {
@@ -97,14 +155,8 @@
 	Actors = {
 		move : {
 			execute : function( $sprite, $data, $time ) {
-				if ( $sprite.painter === R_PAINTER )
-					$sprite.left += 1;
-				if ( $sprite.painter === L_PAINTER )
-					$sprite.left -= 1;
-				if ( $sprite.painter === D_PAINTER )
-					$sprite.top += 1;
-				if ( $sprite.painter === U_PAINTER )
-					$sprite.top -= 1;
+				$sprite.left += $data.speedLeft;
+				$sprite.top += $data.speedTop;
 			}
 		},
 		next : {
@@ -113,91 +165,70 @@
 			execute : function( $sprite, $data, $time ) {
 				if ( $time - this.lastTime > this.interval ) {
 					this.lastTime = $time;
-					$sprite.painter.advance();
+					$sprite.advance();
 				}
+			}
+		}
+	};
+	
+	PainterFactory = {
+		UP : 'UP',
+		DOWN : 'DOWN',
+		LEFT : 'LEFT',
+		RIGHT : 'RIGHT',
+		ATTACK : 'ATTACK',
+		create : function( $status ) {
+			switch ( $status ) {
+			case this.UP:
+				return new Painter( moveUp, activeUp );
+				break;
+			case this.DOWN:
+				return new Painter( moveDown, activeDown );
+				break;
+			case this.LEFT:
+				return new Painter( moveLeft, activeLeft );
+				break;
+			case this.RIGHT:
+				return new Painter( moveRight, activeRight );
+				break;
+			case this.ATTACK:
+				return new Painter( attack, activeAttack );
+				break;
 			}
 		}
 	};
 	
 	initialize = function() {
 		var
-		GAME,
-		CHARACTER_SIZE = 96,
-		CONTEXT = document.getElementById( 'canvas' ).getContext( '2d' ),
-		
-		moveUp = new Image( CHARACTER_SIZE, CHARACTER_SIZE ),
-		moveDown = new Image( CHARACTER_SIZE, CHARACTER_SIZE ),
-		moveLeft = new Image( CHARACTER_SIZE, CHARACTER_SIZE ),
-		moveRight = new Image( CHARACTER_SIZE, CHARACTER_SIZE ),
-		attack = new Image( CHARACTER_SIZE, CHARACTER_SIZE ),
-		
-		activeDown = [
-			{left: 0, top: 0, width: 1024, height: 1024},
-			{left: 1024, top: 0, width: 1024, height: 1024},
-			{left: 2048, top: 0, width: 1024, height: 1024}
-		],
-		activeUp = [
-			{left: 0, top: 0, width: 1024, height: 1024},
-			{left: 1024, top: 0, width: 1024, height: 1024},
-			{left: 2048, top: 0, width: 1024, height: 1024}
-		],
-		activeRight = [
-			{left: 0, top: 0, width: 1024, height: 1024},
-			{left: 1024, top: 0, width: 1024, height: 1024},
-			{left: 2048, top: 0, width: 1024, height: 1024},
-			{left: 3072, top: 0, width: 1024, height: 1024},
-			{left: 4096, top: 0, width: 1024, height: 1024},
-			{left: 5120, top: 0, width: 1024, height: 1024},
-			{left: 6144, top: 0, width: 1024, height: 1024},
-			{left: 7168, top: 0, width: 1024, height: 1024}
-		],
-		activeLeft = [
-			{left: 0, top: 0, width: 1024, height: 1024},
-			{left: 1024, top: 0, width: 1024, height: 1024},
-			{left: 2048, top: 0, width: 1024, height: 1024},
-			{left: 3072, top: 0, width: 1024, height: 1024},
-			{left: 4096, top: 0, width: 1024, height: 1024},
-			{left: 5120, top: 0, width: 1024, height: 1024},
-			{left: 6144, top: 0, width: 1024, height: 1024},
-			{left: 7168, top: 0, width: 1024, height: 1024}
-		],
-		activeAttack = [
-			{left: 0, top: 0, width: 512, height: 512},
-			{left: 512, top: 0, width: 512, height: 512},
-			{left: 1024, top: 0, width: 512, height: 512},
-			{left: 1536, top: 0, width: 512, height: 512},
-			{left: 2048, top: 0, width: 512, height: 512},
-			{left: 2560, top: 0, width: 512, height: 512},
-			{left: 3072, top: 0, width: 512, height: 512},
-			{left: 3584, top: 0, width: 512, height: 512}
-		]
-		;
-		
-		moveUp.src = 'img/toBack.png';
-		moveDown.src = 'img/toStright.png';
-		moveLeft.src = 'img/goLeft.png';
-		moveRight.src = 'img/goRight.png';
-		attack.src = 'img/Stright_Sprite.png';
-		
-		U_PAINTER = new Painter( moveUp, activeUp );
-		D_PAINTER = new Painter( moveDown, activeDown );
-		L_PAINTER = new Painter( moveLeft, activeLeft );
-		R_PAINTER = new Painter( moveRight, activeRight );
-		A_PAINTER = new Painter( attack, activeAttack );
+		context = document.getElementById( 'canvas' ).getContext( '2d' ),
+		keyInfos = {
+			'38' : { painter : PainterFactory.create( PainterFactory.UP ), speedLeft : 0, speedTop : -1, status : 'MOVE' },
+			'40' : { painter : PainterFactory.create( PainterFactory.DOWN ), speedLeft : 0, speedTop : 1, status : 'MOVE' },
+			'37' : { painter : PainterFactory.create( PainterFactory.LEFT ), speedLeft : -1, speedTop : 0, status : 'MOVE' },
+			'39' : { painter : PainterFactory.create( PainterFactory.RIGHT ), speedLeft : 1, speedTop : 0, status : 'MOVE' },
+			'32' : { painter : PainterFactory.create( PainterFactory.ATTACK ), speedLeft : 0, speedTop : 0, status : 'ATTACK' }
+		};
 		
 		document.addEventListener( 'keydown', function( $event ) {
-			var	keys = { '38' : U_PAINTER, '40' : D_PAINTER, '37' : L_PAINTER, '39' : R_PAINTER, '32' : A_PAINTER };
+			var	keyInfo, painter, p1 = sog.sprite.p1;
 			
-			if ( $event.keyCode in keys ) {
-				if ( GAME.sprite.p1.painter !== keys[ $event.keyCode ] ) {
-					GAME.sprite.p1.painter = keys[ $event.keyCode ];
+			if ( $event.keyCode in keyInfos ) {
+				keyInfo = keyInfos[ $event.keyCode ];
+				
+				if ( p1.painter !== keyInfo.painter ) {
+					p1.painter = keyInfo.painter;
 				}
-				if ( GAME.sprite.p1.actors.indexOf( Actors.next ) === -1 ) {
-					GAME.sprite.p1.actors.push( Actors.next );
+				if ( p1.actors.indexOf( Actors.next ) === -1 ) {
+					p1.actors.push( Actors.next );
 				}
-				if ( GAME.sprite.p1.actors.indexOf( Actors.move ) === -1 ) {
-					GAME.sprite.p1.actors.push( Actors.move );
+				if ( p1.actors.indexOf( Actors.move ) === -1 ) {
+					p1.actors.push( Actors.move );
 				}
+				
+				sog.server.update( {
+					speedLeft : keyInfo.speedLeft,
+					speedTop : keyInfo.speedTop
+				} );
 			}
 		}, false );
 		
@@ -205,19 +236,25 @@
 			var i, k;
 			
 			for ( k in Actors ) {
-				if ( ( i = GAME.sprite.p1.actors.indexOf( Actors[ k ] ) ) > -1 ) {
-					GAME.sprite.p1.actors.splice( i, 1 );
+				if ( ( i = sog.sprite.p1.actors.indexOf( Actors[ k ] ) ) > -1 ) {
+					sog.sprite.p1.actors.splice( i, 1 );
 				}
 			}
 		}, false );
 		
+		moveUp.src = 'img/toBack.png';
+		moveDown.src = 'img/toStright.png';
+		moveLeft.src = 'img/goLeft.png';
+		moveRight.src = 'img/goRight.png';
+		attack.src = 'img/Stright_Sprite.png';
+		
 		$util.syncOnLoad( [moveUp, moveDown, moveLeft, moveRight], function() {
 			var server = new Server( { host : 'http://127.0.0.1', dataUrl : '/data', registerUrl : '/register' } );
 			
-			GAME = new Game( { context : CONTEXT, server : server, room : '', uid : '', sprite : new Sprite( D_PAINTER ) } );
+			sog = new Game( { context : context, server : server, room : '', uid : '', sprite : new Sprite( PainterFactory.create( PainterFactory.DOWN ) ) } );
 			
 			document.removeEventListener( 'DOMContentLoaded', initialize, false );
-			GAME.start();
+			sog.start();
 		} );
 	};
 	
