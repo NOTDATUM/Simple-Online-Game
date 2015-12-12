@@ -298,11 +298,11 @@
 			clearAllActors( sog.sprite.p1 );
 		}, false );
 		
-		moveUp.src = 'img/toBack.png';
-		moveDown.src = 'img/toStright.png';
-		moveLeft.src = 'img/goLeft.png';
-		moveRight.src = 'img/goRight.png';
-		attack.src = 'img/Stright_Sprite.png';
+		moveUp.src = 'static/img/toBack.png';
+		moveDown.src = 'static/img/toStright.png';
+		moveLeft.src = 'static/img/goLeft.png';
+		moveRight.src = 'static/img/goRight.png';
+		attack.src = 'static/img/Stright_Sprite.png';
 		
 		$util.syncOnLoad( [moveUp, moveDown, moveLeft, moveRight], function() {
 			var server = new Server( { host : 'http://127.0.0.1', dataUrl : '/data', registerUrl : '/register' } );
