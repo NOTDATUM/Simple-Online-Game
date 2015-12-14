@@ -154,6 +154,7 @@
 		this.host = $params.host;
 		this.dataUrl = $params.dataUrl;
 		this.registerUrl = $params.registerUrl;
+		this.updateUrl = $params.updateUrl;
 		this.characterData = {};
 	};
 	
@@ -305,8 +306,8 @@
 		attack.src = 'static/img/Stright_Sprite.png';
 		
 		$util.syncOnLoad( [moveUp, moveDown, moveLeft, moveRight], function() {
-			var server = new Server( { host : 'http://127.0.0.1', dataUrl : '/data', registerUrl : '/register' } );
-			sog = new Game( { context : context, server : server, room : '', uid : '', sprite : new Sprite( PainterFactory.create( PainterFactory.DOWN ) ) } );
+			var server = new Server( { host : 'http://127.0.0.1', dataUrl : '/data', registerUrl : '/register', updateUrl : '/update' } );
+			sog = new Game( { context : context, server : server, room : 'ROOM1', uid : 'UID' + ( Math.floor( Math.random() * 2 ) + 1 ), sprite : new Sprite( PainterFactory.create( PainterFactory.DOWN ) ) } );
 			
 			document.removeEventListener( 'DOMContentLoaded', initialize, false );
 			sog.start();
