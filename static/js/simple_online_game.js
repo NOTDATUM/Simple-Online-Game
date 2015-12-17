@@ -96,7 +96,7 @@
 			clearAllActors( $sprite );
 		}
 		if ( $sprite === sog.sprite.p1 ) {
-			sog.server.update( { speedV : $data.speedV, speedH : $data.speedH } );
+			sog.server.update( $data );
 		}
 	}
 	
@@ -117,8 +117,6 @@
 	Game = function( $params ) {
 		this.context = $params.context;
 		this.server = $params.server;
-		this.room = $params.room;
-		this.uid = $params.uid;
 		this.sprite = {};
 		this.sprite.p1 = $params.sprite;
 		this.sprite.p2 = null;
@@ -126,8 +124,10 @@
 	
 	Game.prototype.start = function() {
 		painters = createPlayerPainters();
-		this.server.register( this.room, this.uid );
-		requestAnimationFrame( $util.fn( this.progress, this ) );
+		
+		if ( this.server.register() ) {
+			requestAnimationFrame( $util.fn( this.progress, this ) );
+		}
 	};
 	
 	Game.prototype.progress = function( $time ) {
@@ -140,8 +140,10 @@
 		if ( data.p2 ) {
 			if ( !this.sprite.p2 ) {
 				this.sprite.p2 = new Sprite;
+				this.sprite.p2.left = data.p2.left;
+				this.sprite.p2.top = data.p2.top;
 			}
-			
+
 			setSpriteData( this.sprite.p2, data.p2 );
 			this.sprite.p2.update( data.p2, $time );
 			this.sprite.p2.paint( this.context );
@@ -151,38 +153,67 @@
 	};
 	
 	Server = function( $params ) {
-		this.host = $params.host;
+		this.userId = null;
+		this.roomNo = $params.roomNo;
 		this.dataUrl = $params.dataUrl;
 		this.registerUrl = $params.registerUrl;
 		this.updateUrl = $params.updateUrl;
-		this.characterData = {};
 	};
 	
 	Server.prototype.data = function() {
-		if ( !sog.sprite.p2 ) {
-			this.characterData.p2 = { speedV : 1, speedH : 0, direction : 'RIGHT', status : 'MOVE' };
-		}
-		if ( sog.sprite.p2 && sog.sprite.p2.left > sog.context.canvas.width - 120 ) {
-			this.characterData.p2 = { speedV : -1, speedH : 0, direction : 'LEFT', status : 'MOVE' };
-		}
-		if ( sog.sprite.p2 && sog.sprite.p2.left < 20 ) {
-			this.characterData.p2 = { speedV : 1, speedH : 0, direction : 'RIGHT', status : 'MOVE' };
-		}
+		var result = {}, self = this;
 		
-		return this.characterData;
+		$util.ajax( this.dataUrl, 'GET', { roomNo : this.roomNo }, function( $result ) {
+			var i, p;
+			
+			for ( i in $result ) {
+				p = self.userId === $result[ i ].userId ? 'p1' : 'p2';
+				
+				result[ p ] = {
+					left : $result[ i ].left,
+					top : $result[ i ].top,
+					speedV : $result[ i ].speedV,
+					speedH : $result[ i ].speedH,
+					direction : $result[ i ].direction,
+					status : $result[ i ].status
+				};
+			}
+		}, false );
+		
+		return result;
 	};
 	
-	Server.prototype.register = function( $room, $uid ) {
+	Server.prototype.register = function() {
+		var result, self = this;
 		
+		$util.ajax( this.registerUrl, 'POST', { roomNo : this.roomNo }, function( $result ) {
+			if ( $result.code === 0 ) {
+				result = true;
+				self.userId = $result.data.userId;
+			} else {
+				result = false;
+				alert( $result.message );
+			}
+		}, false );
+		
+		return result;
 	};
 	
 	Server.prototype.update = function( $data ) {
-		this.characterData.p1 = $data;
+		$util.ajax( this.updateUrl, 'POST', {
+			roomNo : this.roomNo,
+			userId : this.userId,
+			speedV : $data.speedV,
+			speedH : $data.speedH,
+			direction : $data.direction,
+			status : $data.status
+		}, null, true );
 	};
 	
 	Sprite = function( $painter, $actors ) {
 		this.painter = $painter;
 		this.actors = $actors || {};
+		this.data = null;
 		this.left = 0;
 		this.top = 0;
 	};
@@ -192,6 +223,8 @@
 	};
 	
 	Sprite.prototype.update = function( $data, $time ) {
+		this.data = $data;
+		
 		for ( var name in this.actors ) {
 			this.actors[ name ].execute( this, $data, $time );
 		}
@@ -296,7 +329,10 @@
 		}, false );
 		
 		document.addEventListener( 'keyup', function( $event ) {
-			clearAllActors( sog.sprite.p1 );
+			var sprite = sog.sprite.p1;
+			
+			clearAllActors( sprite );
+			sog.server.update( { speedV : sprite.data.speedV, speedH : sprite.data.speedH, direction : sprite.data.direction, status : 'STAY' } );
 		}, false );
 		
 		moveUp.src = 'static/img/toBack.png';
@@ -306,8 +342,8 @@
 		attack.src = 'static/img/Stright_Sprite.png';
 		
 		$util.syncOnLoad( [moveUp, moveDown, moveLeft, moveRight], function() {
-			var server = new Server( { host : 'http://127.0.0.1', dataUrl : '/data', registerUrl : '/register', updateUrl : '/update' } );
-			sog = new Game( { context : context, server : server, room : 'ROOM1', uid : 'UID' + ( Math.floor( Math.random() * 2 ) + 1 ), sprite : new Sprite( PainterFactory.create( PainterFactory.DOWN ) ) } );
+			var server = new Server( { roomNo : 'ROOM1', dataUrl : '/data', registerUrl : '/register', updateUrl : '/update' } );
+			sog = new Game( { context : context, server : server, sprite : new Sprite( PainterFactory.create( PainterFactory.DOWN ) ) } );
 			
 			document.removeEventListener( 'DOMContentLoaded', initialize, false );
 			sog.start();

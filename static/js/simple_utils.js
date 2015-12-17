@@ -46,15 +46,16 @@ var $util = ( function() {
 			};
 		},
 
-		ajax : function( $url, $method, $parameters, $callback ) {
+		ajax : function( $url, $method, $parameters, $callback, $sync ) {
 			var callback = function() {
 					if ( httpRequest.readyState == 4 ) {
 						var result = JSON.parse( httpRequest.responseText );
 
-						if ( httpRequest.status == 200 )
-							$callback( result );
-						else
+						if ( httpRequest.status == 200 ) {
+							if ( $callback ) $callback( result );
+						} else {
 							alert( result.message + '[' + result.code + ']' );
+						}
 					}
 				};
 
@@ -63,7 +64,7 @@ var $util = ( function() {
 				if ( $method === "GET" ) $url += "?parameters=" + $parameters;
 			}
 
-			httpRequest.open( $method, $url, true );
+			httpRequest.open( $method, $url, $sync === undefined ? true : $sync );
 			httpRequest.setRequestHeader( 'Content-Type', 'application/json' );
 			httpRequest.onreadystatechange = callback;
 			httpRequest.send( $parameters && $method === "POST" ? $parameters : null );
