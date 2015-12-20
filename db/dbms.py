@@ -86,3 +86,11 @@ UPDATE_SOG = """
 		AND userId = ${userId}
 		AND roomNo = ${roomNo}
 """
+
+DELETE_SOG = """
+		DELETE FROM
+			sog
+		WHERE 1 = 1
+			AND userId = ${userId}
+			AND roomNo = ${roomNo}
+"""

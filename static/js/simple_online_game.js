@@ -3,7 +3,7 @@
 	
 	var
 	CHARACTER_SIZE = 96,
-	initialize, painters, sog, Game, Server, Sprite, Painter, Actors, PainterFactory,
+	initialize, painters, requestId, sog, Game, Server, Sprite, Painter, Actors, PainterFactory,
 	
 	moveUp = new Image( CHARACTER_SIZE, CHARACTER_SIZE ),
 	moveDown = new Image( CHARACTER_SIZE, CHARACTER_SIZE ),
@@ -47,9 +47,7 @@
 		{left: 1024, top: 0, width: 512, height: 512},
 		{left: 1536, top: 0, width: 512, height: 512},
 		{left: 2048, top: 0, width: 512, height: 512},
-		{left: 2560, top: 0, width: 512, height: 512},
-		{left: 3072, top: 0, width: 512, height: 512},
-		{left: 3584, top: 0, width: 512, height: 512}
+		{left: 2560, top: 0, width: 512, height: 512}
 	]
 	;
 	
@@ -126,7 +124,7 @@
 		painters = createPlayerPainters();
 		
 		if ( this.server.register() ) {
-			requestAnimationFrame( $util.fn( this.progress, this ) );
+			requestId = requestAnimationFrame( $util.fn( this.progress, this ) );
 		}
 	};
 	
@@ -149,7 +147,7 @@
 			this.sprite.p2.paint( this.context );
 		}
 		
-		requestAnimationFrame( $util.fn( this.progress, this ) );
+		requestId = requestAnimationFrame( $util.fn( this.progress, this ) );
 	};
 	
 	Server = function( $params ) {
@@ -158,6 +156,7 @@
 		this.dataUrl = $params.dataUrl;
 		this.registerUrl = $params.registerUrl;
 		this.updateUrl = $params.updateUrl;
+		this.exitUrl = $params.exitUrl;
 	};
 	
 	Server.prototype.data = function() {
@@ -208,6 +207,16 @@
 			direction : $data.direction,
 			status : $data.status
 		}, null, true );
+	};
+	
+	Server.prototype.exit = function( $target ) {
+		cancelAnimationFrame( requestId );
+		requestId = null;
+		
+		$util.ajax( this.exitUrl, 'POST', { roomNo : this.roomNo, userId : this.userId }, function( $result ) {
+			$target.style.display = 'none';
+			sog.context.clearRect(0, 0, sog.context.canvas.width, sog.context.canvas.height);
+		}, true );
 	};
 	
 	Sprite = function( $painter, $actors ) {
@@ -313,6 +322,7 @@
 	
 	initialize = function() {
 		var
+		exit = document.getElementById( 'exit' ),
 		context = document.getElementById( 'canvas' ).getContext( '2d' ),
 		keyInfo = {
 			'38' : { speedV : 0, speedH : -1, direction : 'UP', status : 'MOVE' },
@@ -321,6 +331,10 @@
 			'39' : { speedV : 1, speedH : 0, direction : 'RIGHT', status : 'MOVE' },
 			'32' : { speedV : 0, speedH : 0, direction : 'DOWN', status : 'ATTACK' }
 		};
+		
+		exit.addEventListener( 'click', function( $event ) {
+			sog.server.exit( $event.target );
+		} );
 		
 		document.addEventListener( 'keydown', function( $event ) {
 			if ( $event.keyCode in keyInfo ) {
@@ -339,10 +353,10 @@
 		moveDown.src = 'static/img/toStright.png';
 		moveLeft.src = 'static/img/goLeft.png';
 		moveRight.src = 'static/img/goRight.png';
-		attack.src = 'static/img/Stright_Sprite.png';
+		attack.src = 'static/img/attackLeft.png';
 		
 		$util.syncOnLoad( [moveUp, moveDown, moveLeft, moveRight], function() {
-			var server = new Server( { roomNo : 'ROOM1', dataUrl : '/data', registerUrl : '/register', updateUrl : '/update' } );
+			var server = new Server( { roomNo : 'ROOM1', dataUrl : '/data', registerUrl : '/register', updateUrl : '/update', exitUrl : '/exit' } );
 			sog = new Game( { context : context, server : server, sprite : new Sprite( PainterFactory.create( PainterFactory.DOWN ) ) } );
 			
 			document.removeEventListener( 'DOMContentLoaded', initialize, false );

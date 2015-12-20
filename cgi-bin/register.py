@@ -12,7 +12,7 @@ def process( request, response ):
 	if len( users ) < 2:
 		userId = users[ 0 ][ 'userId' ]
 
-		parameters[ 'userId' ] = userId and 'p2' or 'p1'
+		parameters[ 'userId' ] = userId and ( userId == 'p1' and 'p2' or 'p1' ) or 'p1'
 		parameters[ 'speedV' ] = 0
 		parameters[ 'speedH' ] = 0
 		parameters[ 'direction' ] = 'DOWN'
