@@ -17,8 +17,9 @@
 - 인원 초과 시 접근 못하도록 막고, 메시지 알림
 - **완료**
 
-### Server API 개발 (data, register, update)
+### Server API 개발 (data, register, update, exit)
 - 담당자 : **ACE**
+- 나가기 버튼용 API exit 추가 개발
 - **완료**
 
 ### 서버와 클라이언트 간 연동
