@@ -11,7 +11,7 @@ def dict_factory( cursor, row ):
 	return result
 
 def execute( query, parameters = None ):
-	connection = sqlite3.connect( '/Users/nhnent/Documents/Simple-Online-Game/db/simpledb.sqlite' )
+	connection = sqlite3.connect( 'db/simpledb.sqlite' )
 	connection.row_factory = dict_factory
 	cursor = connection.cursor()
 

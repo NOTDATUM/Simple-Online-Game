@@ -1,22 +1,6 @@
 var $util = ( function() {
 	'use strict';
 
-	var httpRequest = ( function() {
-		if ( window.ActiveXObject ) {
-			try {
-				return new ActiveXObject( 'Msxml2.XMLHTTP' );
-			} catch ( e1 ) {
-				try {
-					return new ActiveXObject( 'Microsoft.XMLHTTP' );
-				} catch ( e2 ) { return null; }
-			}
-		} else if ( window.XMLHttpRequest ) {
-			return new XMLHttpRequest;
-		}
-		
-		return null;
-	} )();
-
 	return {
 		element : function( $id ) {
 			return document.getElementById( $id );
@@ -47,17 +31,19 @@ var $util = ( function() {
 		},
 
 		ajax : function( $url, $method, $parameters, $callback, $sync ) {
-			var callback = function() {
-					if ( httpRequest.readyState == 4 ) {
-						var result = JSON.parse( httpRequest.responseText );
+			var
+			httpRequest = new XMLHttpRequest,
+			callback = function() {
+				if ( httpRequest.readyState == 4 ) {
+					var result = JSON.parse( httpRequest.responseText );
 
-						if ( httpRequest.status == 200 ) {
-							if ( $callback ) $callback( result );
-						} else {
-							alert( result.message + '[' + result.code + ']' );
-						}
+					if ( httpRequest.status == 200 ) {
+						if ( $callback ) $callback( result );
+					} else {
+						alert( result.message + '[' + result.code + ']' );
 					}
-				};
+				}
+			};
 
 			if ( $parameters ) {
 				$parameters = encodeURIComponent( JSON.stringify( $parameters ) );
