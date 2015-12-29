@@ -9,6 +9,8 @@ def process( request, response ):
 	parameters[ 'userId' ] = request[ 'userId' ]
 	parameters[ 'speedV' ] = request[ 'speedV' ]
 	parameters[ 'speedH' ] = request[ 'speedH' ]
+	parameters[ 'left' ] = request[ 'left' ]
+	parameters[ 'top' ] = request[ 'top' ]
 	parameters[ 'direction' ] = request[ 'direction' ]
 	parameters[ 'status' ] = request[ 'status' ]
 

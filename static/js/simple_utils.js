@@ -1,6 +1,8 @@
 var $util = ( function() {
 	'use strict';
 
+	var _httpRequest = new XMLHttpRequest;
+
 	return {
 		element : function( $id ) {
 			return document.getElementById( $id );
@@ -30,9 +32,9 @@ var $util = ( function() {
 			};
 		},
 
-		ajax : function( $url, $method, $parameters, $callback, $sync ) {
+		ajax : function( $url, $method, $parameters, $callback, $async ) {
 			var
-			httpRequest = new XMLHttpRequest,
+			httpRequest = $async === undefined ? new XMLHttpRequest : ( $async ? new XMLHttpRequest : _httpRequest ),
 			callback = function() {
 				if ( httpRequest.readyState == 4 ) {
 					var result = JSON.parse( httpRequest.responseText );
@@ -50,7 +52,7 @@ var $util = ( function() {
 				if ( $method === "GET" ) $url += "?parameters=" + $parameters;
 			}
 
-			httpRequest.open( $method, $url, $sync === undefined ? true : $sync );
+			httpRequest.open( $method, $url, $async === undefined ? true : $async );
 			httpRequest.setRequestHeader( 'Content-Type', 'application/json' );
 			httpRequest.onreadystatechange = callback;
 			httpRequest.send( $parameters && $method === "POST" ? $parameters : null );

@@ -76,8 +76,8 @@ UPDATE_SOG = """
 	UPDATE
 		sog
 	SET
-		left = left + ${speedV},
-		top = top + ${speedH},
+		left = ${left},
+		top = ${top},
 		speedV = ${speedV},
 		speedH = ${speedH},
 		direction = ${direction},

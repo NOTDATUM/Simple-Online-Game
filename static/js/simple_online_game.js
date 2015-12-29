@@ -93,9 +93,6 @@
 		} else {
 			clearAllActors( $sprite );
 		}
-		if ( $sprite === sog.sprite.p1 ) {
-			sog.server.update( $data );
-		}
 	}
 	
 	function setAllActors( $sprite ) {
@@ -132,6 +129,7 @@
 		var data = this.server.data();
 		
 		this.context.clearRect(0, 0, this.context.canvas.width, this.context.canvas.height);
+		setSpriteData( this.sprite.p1, data.p1 );
 		this.sprite.p1.update( data.p1, $time );
 		this.sprite.p1.paint( this.context );
 
@@ -204,6 +202,8 @@
 			userId : this.userId,
 			speedV : $data.speedV,
 			speedH : $data.speedH,
+			left : sog.sprite.p1.left + $data.speedV,
+			top : sog.sprite.p1.top + $data.speedH,
 			direction : $data.direction,
 			status : $data.status
 		}, null, true );
@@ -272,12 +272,12 @@
 		
 		move = function() {};
 		move.prototype.execute = function( $sprite, $data, $time ) {
-			$sprite.left += $data.speedV;
-			$sprite.top += $data.speedH;
+			$sprite.left = $data.left;
+			$sprite.top = $data.top;
 		};
 		
 		next = function() {
-			this.interval = 20;
+			this.interval = 50;
 			this.lastTime = 0;
 		};
 		next.prototype.execute = function( $sprite, $data, $time ) {
@@ -325,10 +325,10 @@
 		exit = document.getElementById( 'exit' ),
 		context = document.getElementById( 'canvas' ).getContext( '2d' ),
 		keyInfo = {
-			'38' : { speedV : 0, speedH : -1, direction : 'UP', status : 'MOVE' },
-			'40' : { speedV : 0, speedH : 1, direction : 'DOWN', status : 'MOVE' },
-			'37' : { speedV : -1, speedH : 0, direction : 'LEFT', status : 'MOVE' },
-			'39' : { speedV : 1, speedH : 0, direction : 'RIGHT', status : 'MOVE' },
+			'38' : { speedV : 0, speedH : -2, direction : 'UP', status : 'MOVE' },
+			'40' : { speedV : 0, speedH : 2, direction : 'DOWN', status : 'MOVE' },
+			'37' : { speedV : -2, speedH : 0, direction : 'LEFT', status : 'MOVE' },
+			'39' : { speedV : 2, speedH : 0, direction : 'RIGHT', status : 'MOVE' },
 			'32' : { speedV : 0, speedH : 0, direction : 'DOWN', status : 'ATTACK' }
 		};
 		
@@ -338,15 +338,13 @@
 		
 		document.addEventListener( 'keydown', function( $event ) {
 			if ( $event.keyCode in keyInfo ) {
-				setSpriteData( sog.sprite.p1, keyInfo[ $event.keyCode ] );
+				sog.server.update( keyInfo[ $event.keyCode ] );
 			}
 		}, false );
 		
 		document.addEventListener( 'keyup', function( $event ) {
 			var sprite = sog.sprite.p1;
-			
-			clearAllActors( sprite );
-			sog.server.update( { speedV : sprite.data.speedV, speedH : sprite.data.speedH, direction : sprite.data.direction, status : 'STAY' } );
+			sog.server.update( { speedV : 0, speedH : 0, direction : sprite.data.direction, status : 'STAY' } );
 		}, false );
 		
 		moveUp.src = 'static/img/toBack.png';
