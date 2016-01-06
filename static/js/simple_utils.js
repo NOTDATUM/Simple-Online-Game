@@ -1,7 +1,9 @@
 var $util = ( function() {
 	'use strict';
 
-	var _httpRequest = new XMLHttpRequest;
+	var
+	_queue = [],
+	_httpRequest = new XMLHttpRequest;
 
 	return {
 		element : function( $id ) {
@@ -89,6 +91,20 @@ var $util = ( function() {
 					clearInterval( interval );
 					callback();
 				}, 60 );
+		},
+
+		syncQueue : function( $url, $method, $parameters, $callback ) {
+			_queue.push( this.fn( this.ajax, null, [ $url, $method, $parameters,
+				function() {
+					$callback && $callback();
+					_queue.splice( 0, 1 );
+					_queue[ 0 ] && _queue[ 0 ]();
+				}
+			, true ] ) );
+
+			if ( _queue.length === 1 ) {
+				_queue[ 0 ]();
+			}
 		}
 	};
 } )();

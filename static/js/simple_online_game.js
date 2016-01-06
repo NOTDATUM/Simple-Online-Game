@@ -195,9 +195,9 @@
 		
 		return result;
 	};
-	
+
 	Server.prototype.update = function( $data ) {
-		$util.ajax( this.updateUrl, 'POST', {
+		$util.syncQueue( this.updateUrl, 'POST', {
 			roomNo : this.roomNo,
 			userId : this.userId,
 			speedV : $data.speedV,
@@ -206,7 +206,7 @@
 			top : sog.sprite.p1.top + $data.speedH,
 			direction : $data.direction,
 			status : $data.status
-		}, null, true );
+		} );
 	};
 	
 	Server.prototype.exit = function( $target ) {
