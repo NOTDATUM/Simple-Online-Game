@@ -119,85 +119,89 @@
 	
 	Game.prototype.start = function() {
 		painters = createPlayerPainters();
-		
-		if ( this.server.register() ) {
-			requestId = requestAnimationFrame( $util.fn( this.progress, this ) );
-		}
+		this.server.connect( this.registerCB, this.dataCB );
 	};
 	
 	Game.prototype.progress = function( $time ) {
-		var data = this.server.data();
-		
+		this.server.data( $time );
+	};
+
+	Game.prototype.registerCB = function( $data ) {
+		this.server.userId = $data.userId;
+		requestId = requestAnimationFrame( $util.fn( this.progress, this ) );
+	};
+
+	Game.prototype.dataCB = function( $data, $time ) {
+		var p2, id;
+
 		this.context.clearRect(0, 0, this.context.canvas.width, this.context.canvas.height);
-		setSpriteData( this.sprite.p1, data.p1 );
-		this.sprite.p1.update( data.p1, $time );
+		setSpriteData( this.sprite.p1, $data[ this.server.userId ] );
+		this.sprite.p1.update( $data[ this.server.userId ], $time );
 		this.sprite.p1.paint( this.context );
 
-		if ( data.p2 ) {
+		for ( id in $data ) {
+			if ( id != this.server.userId ) {
+				p2 = id;
+			}
+		}
+
+		if ( p2 ) {
 			if ( !this.sprite.p2 ) {
 				this.sprite.p2 = new Sprite;
-				this.sprite.p2.left = data.p2.left;
-				this.sprite.p2.top = data.p2.top;
+				this.sprite.p2.left = $data[ p2 ].left;
+				this.sprite.p2.top = $data[ p2 ].top;
 			}
 
-			setSpriteData( this.sprite.p2, data.p2 );
-			this.sprite.p2.update( data.p2, $time );
+			setSpriteData( this.sprite.p2, $data[ p2 ] );
+			this.sprite.p2.update( $data[ p2 ], $time );
 			this.sprite.p2.paint( this.context );
 		}
 		
 		requestId = requestAnimationFrame( $util.fn( this.progress, this ) );
 	};
-	
+
 	Server = function( $params ) {
 		this.userId = null;
 		this.roomNo = $params.roomNo;
-		this.dataUrl = $params.dataUrl;
-		this.registerUrl = $params.registerUrl;
-		this.updateUrl = $params.updateUrl;
-		this.exitUrl = $params.exitUrl;
+		this.socket = null;
+		this.command = { REGISTER : 'register', UPDATE : 'update', DATA : 'data' };
 	};
-	
-	Server.prototype.data = function() {
-		var result = {}, self = this;
-		
-		$util.ajax( this.dataUrl, 'GET', { roomNo : this.roomNo }, function( $result ) {
-			var i, p;
-			
-			for ( i in $result ) {
-				p = self.userId === $result[ i ].userId ? 'p1' : 'p2';
-				
-				result[ p ] = {
-					left : $result[ i ].left,
-					top : $result[ i ].top,
-					speedV : $result[ i ].speedV,
-					speedH : $result[ i ].speedH,
-					direction : $result[ i ].direction,
-					status : $result[ i ].status
-				};
-			}
-		}, false );
-		
-		return result;
-	};
-	
-	Server.prototype.register = function() {
-		var result, self = this;
-		
-		$util.ajax( this.registerUrl, 'POST', { roomNo : this.roomNo }, function( $result ) {
-			if ( $result.code === 0 ) {
-				result = true;
-				self.userId = $result.data.userId;
+
+	Server.prototype.connect = function( $registerCB, $dataCB ) {
+		var self = this;
+		this.socket = new WebSocket('ws://' + ( window.location.hostname || 'localhost' ) + ':8080');
+		this.socket.addEventListener( 'open', function() { self.register(); } );
+		this.socket.addEventListener ( 'message', function( $event ) {
+			var result = JSON.parse( $event.data ),
+				data = result.data;
+
+			if ( result.code === 0 ) {
+				if ( result.status === self.command.REGISTER ) {
+					$registerCB.apply( sog, [ data ] );
+				} else if ( result.status === self.command.DATA ) {
+					$dataCB.apply( sog, [ data, result.time ] );
+				}
 			} else {
-				result = false;
-				alert( $result.message );
+				self.exit();
+				alert( data.message );
 			}
-		}, false );
-		
-		return result;
+		} );
+		this.socket.addEventListener( 'close' , function( $event ) {
+			document.getElementById( 'exit' ).style.display = 'none';
+			sog.context.clearRect( 0, 0, sog.context.canvas.width, sog.context.canvas.height );
+		} );
+	};
+	
+	Server.prototype.data = function( $time ) {
+		this.socket.send( this.command.DATA + '::' + JSON.stringify( { roomNo : this.roomNo, time : $time } ) );
+	};
+	
+	Server.prototype.register = function() {	
+		this.socket.send( this.command.REGISTER + '::' + JSON.stringify( { roomNo : this.roomNo } ) );
 	};
 
 	Server.prototype.update = function( $data ) {
-		$util.syncQueue( this.updateUrl, 'POST', {
+		this.socket.send( this.command.UPDATE + '::' + JSON.stringify( {
 			roomNo : this.roomNo,
 			userId : this.userId,
 			speedV : $data.speedV,
@@ -206,17 +210,13 @@
 			top : sog.sprite.p1.top + $data.speedH,
 			direction : $data.direction,
 			status : $data.status
-		} );
+		} ) );
 	};
 	
 	Server.prototype.exit = function( $target ) {
 		cancelAnimationFrame( requestId );
 		requestId = null;
-		
-		$util.ajax( this.exitUrl, 'POST', { roomNo : this.roomNo, userId : this.userId }, function( $result ) {
-			$target.style.display = 'none';
-			sog.context.clearRect(0, 0, sog.context.canvas.width, sog.context.canvas.height);
-		}, true );
+		this.socket.close();
 	};
 	
 	Sprite = function( $painter, $actors ) {
@@ -272,12 +272,12 @@
 		
 		move = function() {};
 		move.prototype.execute = function( $sprite, $data, $time ) {
-			$sprite.left = $data.left;
-			$sprite.top = $data.top;
+			$sprite.left += $data.speedV;
+			$sprite.top += $data.speedH;
 		};
 		
 		next = function() {
-			this.interval = 50;
+			this.interval = 20;
 			this.lastTime = 0;
 		};
 		next.prototype.execute = function( $sprite, $data, $time ) {
@@ -325,15 +325,15 @@
 		exit = document.getElementById( 'exit' ),
 		context = document.getElementById( 'canvas' ).getContext( '2d' ),
 		keyInfo = {
-			'38' : { speedV : 0, speedH : -2, direction : 'UP', status : 'MOVE' },
-			'40' : { speedV : 0, speedH : 2, direction : 'DOWN', status : 'MOVE' },
-			'37' : { speedV : -2, speedH : 0, direction : 'LEFT', status : 'MOVE' },
-			'39' : { speedV : 2, speedH : 0, direction : 'RIGHT', status : 'MOVE' },
+			'38' : { speedV : 0, speedH : -1, direction : 'UP', status : 'MOVE' },
+			'40' : { speedV : 0, speedH : 1, direction : 'DOWN', status : 'MOVE' },
+			'37' : { speedV : -1, speedH : 0, direction : 'LEFT', status : 'MOVE' },
+			'39' : { speedV : 1, speedH : 0, direction : 'RIGHT', status : 'MOVE' },
 			'32' : { speedV : 0, speedH : 0, direction : 'DOWN', status : 'ATTACK' }
 		};
 		
 		exit.addEventListener( 'click', function( $event ) {
-			sog.server.exit( $event.target );
+			sog.server.exit();
 		} );
 		
 		document.addEventListener( 'keydown', function( $event ) {
@@ -354,7 +354,7 @@
 		attack.src = 'static/img/attackLeft.png';
 		
 		$util.syncOnLoad( [moveUp, moveDown, moveLeft, moveRight], function() {
-			var server = new Server( { roomNo : 'ROOM1', dataUrl : '/data', registerUrl : '/register', updateUrl : '/update', exitUrl : '/exit' } );
+			var server = new Server( { roomNo : 'ROOM1' } );
 			sog = new Game( { context : context, server : server, sprite : new Sprite( PainterFactory.create( PainterFactory.DOWN ) ) } );
 			
 			document.removeEventListener( 'DOMContentLoaded', initialize, false );
