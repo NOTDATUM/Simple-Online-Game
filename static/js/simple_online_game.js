@@ -9,27 +9,20 @@
 	moveDown = new Image( CHARACTER_SIZE, CHARACTER_SIZE ),
 	moveLeft = new Image( CHARACTER_SIZE, CHARACTER_SIZE ),
 	moveRight = new Image( CHARACTER_SIZE, CHARACTER_SIZE ),
-	attack = new Image( CHARACTER_SIZE, CHARACTER_SIZE ),
+	attackUp = new Image( CHARACTER_SIZE, CHARACTER_SIZE ),
+	attackDown = new Image( CHARACTER_SIZE, CHARACTER_SIZE ),
+	attackLeft = new Image( CHARACTER_SIZE, CHARACTER_SIZE ),
+	attackRight = new Image( CHARACTER_SIZE, CHARACTER_SIZE ),
 	
-	activeDown = [
-		{left: 0, top: 0, width: 1024, height: 1024},
-		{left: 1024, top: 0, width: 1024, height: 1024},
-		{left: 2048, top: 0, width: 1024, height: 1024}
-	],
 	activeUp = [
 		{left: 0, top: 0, width: 1024, height: 1024},
 		{left: 1024, top: 0, width: 1024, height: 1024},
 		{left: 2048, top: 0, width: 1024, height: 1024}
 	],
-	activeRight = [
+	activeDown = [
 		{left: 0, top: 0, width: 1024, height: 1024},
 		{left: 1024, top: 0, width: 1024, height: 1024},
-		{left: 2048, top: 0, width: 1024, height: 1024},
-		{left: 3072, top: 0, width: 1024, height: 1024},
-		{left: 4096, top: 0, width: 1024, height: 1024},
-		{left: 5120, top: 0, width: 1024, height: 1024},
-		{left: 6144, top: 0, width: 1024, height: 1024},
-		{left: 7168, top: 0, width: 1024, height: 1024}
+		{left: 2048, top: 0, width: 1024, height: 1024}
 	],
 	activeLeft = [
 		{left: 0, top: 0, width: 1024, height: 1024},
@@ -41,7 +34,35 @@
 		{left: 6144, top: 0, width: 1024, height: 1024},
 		{left: 7168, top: 0, width: 1024, height: 1024}
 	],
-	activeAttack = [
+	activeRight = [
+		{left: 0, top: 0, width: 1024, height: 1024},
+		{left: 1024, top: 0, width: 1024, height: 1024},
+		{left: 2048, top: 0, width: 1024, height: 1024},
+		{left: 3072, top: 0, width: 1024, height: 1024},
+		{left: 4096, top: 0, width: 1024, height: 1024},
+		{left: 5120, top: 0, width: 1024, height: 1024},
+		{left: 6144, top: 0, width: 1024, height: 1024},
+		{left: 7168, top: 0, width: 1024, height: 1024}
+	],
+	activeAttackUp = [
+		{left: 0, top: 0, width: 1024, height: 1024},
+		{left: 1024, top: 0, width: 1024, height: 1024},
+		{left: 2048, top: 0, width: 1024, height: 1024}
+	],
+	activeAttackDown = [
+		{left: 0, top: 0, width: 1024, height: 1024},
+		{left: 1024, top: 0, width: 1024, height: 1024},
+		{left: 2048, top: 0, width: 1024, height: 1024}
+	],
+	activeAttackLeft = [
+		{left: 0, top: 0, width: 512, height: 512},
+		{left: 512, top: 0, width: 512, height: 512},
+		{left: 1024, top: 0, width: 512, height: 512},
+		{left: 1536, top: 0, width: 512, height: 512},
+		{left: 2048, top: 0, width: 512, height: 512},
+		{left: 2560, top: 0, width: 512, height: 512}
+	],
+	activeAttackRight = [
 		{left: 0, top: 0, width: 512, height: 512},
 		{left: 512, top: 0, width: 512, height: 512},
 		{left: 1024, top: 0, width: 512, height: 512},
@@ -59,22 +80,22 @@
 				UP : {
 					STAY : PainterFactory.create( PainterFactory.UP ),
 					MOVE : PainterFactory.create( PainterFactory.UP ),
-					ATTACK : PainterFactory.create( PainterFactory.ATTACK )
+					ATTACK : PainterFactory.create( PainterFactory.ATTACK_UP )
 				},
 				DOWN : {
 					STAY : PainterFactory.create( PainterFactory.DOWN ),
 					MOVE : PainterFactory.create( PainterFactory.DOWN ),
-					ATTACK : PainterFactory.create( PainterFactory.ATTACK )
+					ATTACK : PainterFactory.create( PainterFactory.ATTACK_DOWN )
 				},
 				LEFT : {
 					STAY : PainterFactory.create( PainterFactory.LEFT ),
 					MOVE : PainterFactory.create( PainterFactory.LEFT ),
-					ATTACK : PainterFactory.create( PainterFactory.ATTACK )
+					ATTACK : PainterFactory.create( PainterFactory.ATTACK_LEFT )
 				},
 				RIGHT : {
 					STAY : PainterFactory.create( PainterFactory.RIGHT ),
 					MOVE : PainterFactory.create( PainterFactory.RIGHT ),
-					ATTACK : PainterFactory.create( PainterFactory.ATTACK )
+					ATTACK : PainterFactory.create( PainterFactory.ATTACK_RIGHT )
 				}
 			};
 		}
@@ -298,7 +319,10 @@
 		DOWN : 'DOWN',
 		LEFT : 'LEFT',
 		RIGHT : 'RIGHT',
-		ATTACK : 'ATTACK',
+		ATTACK_UP : 'ATTACK_UP',
+		ATTACK_DOWN : 'ATTACK_DOWN',
+		ATTACK_LEFT : 'ATTACK_LEFT',
+		ATTACK_RIGHT : 'ATTACK_RIGHT',
 		create : function( $status ) {
 			switch ( $status ) {
 			case this.UP:
@@ -313,8 +337,17 @@
 			case this.RIGHT:
 				return new Painter( moveRight, activeRight );
 				break;
-			case this.ATTACK:
-				return new Painter( attack, activeAttack );
+			case this.ATTACK_UP:
+				return new Painter( attackUp, activeAttackUp );
+				break;
+			case this.ATTACK_DOWN:
+				return new Painter( attackDown, activeAttackDown );
+				break;
+			case this.ATTACK_LEFT:
+				return new Painter( attackLeft, activeAttackLeft );
+				break;
+			case this.ATTACK_RIGHT:
+				return new Painter( attackRight, activeAttackRight );
 				break;
 			}
 		}
@@ -338,7 +371,11 @@
 		
 		document.addEventListener( 'keydown', function( $event ) {
 			if ( $event.keyCode in keyInfo ) {
-				sog.server.update( keyInfo[ $event.keyCode ] );
+				var data = keyInfo[ $event.keyCode ];
+				if ( data.status === 'ATTACK' ) {
+					data.direction = sog.sprite.p1.data.direction;
+				}
+				sog.server.update( data );
 			}
 		}, false );
 		
@@ -347,13 +384,16 @@
 			sog.server.update( { speedV : 0, speedH : 0, direction : sprite.data.direction, status : 'STAY' } );
 		}, false );
 		
-		moveUp.src = 'static/img/toBack.png';
-		moveDown.src = 'static/img/toStright.png';
-		moveLeft.src = 'static/img/goLeft.png';
-		moveRight.src = 'static/img/goRight.png';
-		attack.src = 'static/img/attackLeft.png';
+		moveUp.src = 'static/img/moveUp.png';
+		moveDown.src = 'static/img/moveDown.png';
+		moveLeft.src = 'static/img/moveLeft.png';
+		moveRight.src = 'static/img/moveRight.png';
+		attackUp.src = 'static/img/attackUp.png';
+		attackDown.src = 'static/img/attackDown.png';
+		attackLeft.src = 'static/img/attackLeft.png';
+		attackRight.src = 'static/img/attackRight.png';
 		
-		$util.syncOnLoad( [moveUp, moveDown, moveLeft, moveRight], function() {
+		$util.syncOnLoad( [ moveUp, moveDown, moveLeft, moveRight, attackUp, attackDown, attackLeft, attackRight ], function() {
 			var server = new Server( { roomNo : 'ROOM1' } );
 			sog = new Game( { context : context, server : server, sprite : new Sprite( PainterFactory.create( PainterFactory.DOWN ) ) } );
 			
