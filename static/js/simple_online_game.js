@@ -45,14 +45,20 @@
 		{left: 7168, top: 0, width: 1024, height: 1024}
 	],
 	activeAttackUp = [
-		{left: 0, top: 0, width: 1024, height: 1024},
-		{left: 1024, top: 0, width: 1024, height: 1024},
-		{left: 2048, top: 0, width: 1024, height: 1024}
+		{left: 0, top: 0, width: 512, height: 512},
+		{left: 512, top: 0, width: 512, height: 512},
+		{left: 1024, top: 0, width: 512, height: 512},
+		{left: 1536, top: 0, width: 512, height: 512},
+		{left: 2048, top: 0, width: 512, height: 512},
+		{left: 2560, top: 0, width: 512, height: 512}
 	],
 	activeAttackDown = [
-		{left: 0, top: 0, width: 1024, height: 1024},
-		{left: 1024, top: 0, width: 1024, height: 1024},
-		{left: 2048, top: 0, width: 1024, height: 1024}
+		{left: 0, top: 0, width: 512, height: 512},
+		{left: 512, top: 0, width: 512, height: 512},
+		{left: 1024, top: 0, width: 512, height: 512},
+		{left: 1536, top: 0, width: 512, height: 512},
+		{left: 2048, top: 0, width: 512, height: 512},
+		{left: 2560, top: 0, width: 512, height: 512}
 	],
 	activeAttackLeft = [
 		{left: 0, top: 0, width: 512, height: 512},
