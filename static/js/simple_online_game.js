@@ -12,70 +12,7 @@
 	attackUp = new Image( CHARACTER_SIZE, CHARACTER_SIZE ),
 	attackDown = new Image( CHARACTER_SIZE, CHARACTER_SIZE ),
 	attackLeft = new Image( CHARACTER_SIZE, CHARACTER_SIZE ),
-	attackRight = new Image( CHARACTER_SIZE, CHARACTER_SIZE ),
-	
-	activeUp = [
-		{left: 0, top: 0, width: 1024, height: 1024},
-		{left: 1024, top: 0, width: 1024, height: 1024},
-		{left: 2048, top: 0, width: 1024, height: 1024}
-	],
-	activeDown = [
-		{left: 0, top: 0, width: 1024, height: 1024},
-		{left: 1024, top: 0, width: 1024, height: 1024},
-		{left: 2048, top: 0, width: 1024, height: 1024}
-	],
-	activeLeft = [
-		{left: 0, top: 0, width: 1024, height: 1024},
-		{left: 1024, top: 0, width: 1024, height: 1024},
-		{left: 2048, top: 0, width: 1024, height: 1024},
-		{left: 3072, top: 0, width: 1024, height: 1024},
-		{left: 4096, top: 0, width: 1024, height: 1024},
-		{left: 5120, top: 0, width: 1024, height: 1024},
-		{left: 6144, top: 0, width: 1024, height: 1024},
-		{left: 7168, top: 0, width: 1024, height: 1024}
-	],
-	activeRight = [
-		{left: 0, top: 0, width: 1024, height: 1024},
-		{left: 1024, top: 0, width: 1024, height: 1024},
-		{left: 2048, top: 0, width: 1024, height: 1024},
-		{left: 3072, top: 0, width: 1024, height: 1024},
-		{left: 4096, top: 0, width: 1024, height: 1024},
-		{left: 5120, top: 0, width: 1024, height: 1024},
-		{left: 6144, top: 0, width: 1024, height: 1024},
-		{left: 7168, top: 0, width: 1024, height: 1024}
-	],
-	activeAttackUp = [
-		{left: 0, top: 0, width: 512, height: 512},
-		{left: 512, top: 0, width: 512, height: 512},
-		{left: 1024, top: 0, width: 512, height: 512},
-		{left: 1536, top: 0, width: 512, height: 512},
-		{left: 2048, top: 0, width: 512, height: 512},
-		{left: 2560, top: 0, width: 512, height: 512}
-	],
-	activeAttackDown = [
-		{left: 0, top: 0, width: 512, height: 512},
-		{left: 512, top: 0, width: 512, height: 512},
-		{left: 1024, top: 0, width: 512, height: 512},
-		{left: 1536, top: 0, width: 512, height: 512},
-		{left: 2048, top: 0, width: 512, height: 512},
-		{left: 2560, top: 0, width: 512, height: 512}
-	],
-	activeAttackLeft = [
-		{left: 0, top: 0, width: 512, height: 512},
-		{left: 512, top: 0, width: 512, height: 512},
-		{left: 1024, top: 0, width: 512, height: 512},
-		{left: 1536, top: 0, width: 512, height: 512},
-		{left: 2048, top: 0, width: 512, height: 512},
-		{left: 2560, top: 0, width: 512, height: 512}
-	],
-	activeAttackRight = [
-		{left: 0, top: 0, width: 512, height: 512},
-		{left: 512, top: 0, width: 512, height: 512},
-		{left: 1024, top: 0, width: 512, height: 512},
-		{left: 1536, top: 0, width: 512, height: 512},
-		{left: 2048, top: 0, width: 512, height: 512},
-		{left: 2560, top: 0, width: 512, height: 512}
-	]
+	attackRight = new Image( CHARACTER_SIZE, CHARACTER_SIZE )
 	;
 	
 	function createPlayerPainters() {
@@ -107,6 +44,16 @@
 		}
 		
 		return painters;
+	}
+
+	function createActive( $interval, $length ) {
+		var active = [], i;
+
+		for ( i = 0; i < $length; i++ ) {
+			active.push( { left : i * $interval, top : 0, width : $interval, height : $interval } );
+		}
+
+		return active;
 	}
 	
 	function setSpriteData( $sprite, $data ) {
@@ -304,7 +251,7 @@
 		};
 		
 		next = function() {
-			this.interval = 20;
+			this.interval = 40;
 			this.lastTime = 0;
 		};
 		next.prototype.execute = function( $sprite, $data, $time ) {
@@ -332,28 +279,28 @@
 		create : function( $status ) {
 			switch ( $status ) {
 			case this.UP:
-				return new Painter( moveUp, activeUp );
+				return new Painter( moveUp, createActive( 1024, 3 ) );
 				break;
 			case this.DOWN:
-				return new Painter( moveDown, activeDown );
+				return new Painter( moveDown, createActive( 1024, 3 ) );
 				break;
 			case this.LEFT:
-				return new Painter( moveLeft, activeLeft );
+				return new Painter( moveLeft, createActive( 1024, 8 ) );
 				break;
 			case this.RIGHT:
-				return new Painter( moveRight, activeRight );
+				return new Painter( moveRight, createActive( 1024, 8 ) );
 				break;
 			case this.ATTACK_UP:
-				return new Painter( attackUp, activeAttackUp );
+				return new Painter( attackUp, createActive( 512, 6 ) );
 				break;
 			case this.ATTACK_DOWN:
-				return new Painter( attackDown, activeAttackDown );
+				return new Painter( attackDown, createActive( 512, 6 ) );
 				break;
 			case this.ATTACK_LEFT:
-				return new Painter( attackLeft, activeAttackLeft );
+				return new Painter( attackLeft, createActive( 512, 6 ) );
 				break;
 			case this.ATTACK_RIGHT:
-				return new Painter( attackRight, activeAttackRight );
+				return new Painter( attackRight, createActive( 512, 6 ) );
 				break;
 			}
 		}
