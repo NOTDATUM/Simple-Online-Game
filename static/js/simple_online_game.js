@@ -3,6 +3,9 @@
 	
 	var
 	CHARACTER_SIZE = 96,
+	CORRECT_LVALUE = 11 * 3,
+	CORRECT_TVALUE = 8 * 3,
+	
 	initialize, painters, requestId, sog, Game, Server, Sprite, Painter, Actors, PainterFactory,
 	
 	moveUp = new Image( CHARACTER_SIZE, CHARACTER_SIZE ),
@@ -108,7 +111,7 @@
 	Game.prototype.dataCB = function( $data, $time ) {
 		var p2, id;
 
-		this.context.clearRect(0, 0, this.context.canvas.width, this.context.canvas.height);
+		this.context.clearRect( 0, 0, this.context.canvas.width, this.context.canvas.height );
 		setSpriteData( this.sprite.p1, $data[ this.server.userId ] );
 		this.sprite.p1.update( $data[ this.server.userId ], $time );
 		this.sprite.p1.paint( this.context );
@@ -224,13 +227,37 @@
 	};
 	
 	Painter.prototype.paint = function( $sprite, $context ) {
-		var active = this.active[ this.index ];
+		var
+		i, r, g, b, imageData,
+		active = this.active[ this.index ];
 		
 		$context.drawImage(
 			this.image,
 			active.left, active.top, active.width, active.height,
 			$sprite.left, $sprite.top, this.image.width, this.image.height
 		);
+
+		if ( $sprite === sog.sprite.p2 ) {
+			imageData = $context.getImageData(
+				$sprite.left + CORRECT_LVALUE,
+				$sprite.top + CORRECT_TVALUE,
+				this.image.width - CORRECT_LVALUE * 2,
+				this.image.height - CORRECT_LVALUE - CORRECT_TVALUE
+			);
+
+			for ( i = 0; i < imageData.data.length; i += 4 ) {
+				r = imageData.data[ i ],
+				g = imageData.data[ i + 1 ],
+				b = imageData.data[ i + 2 ];
+
+				if ( r === 202 && g === 16 && b === 16 ) {
+					imageData.data[ i ] = b;
+					imageData.data[ i + 2 ] = r;
+				}
+			}
+
+			$context.putImageData( imageData, $sprite.left + + CORRECT_LVALUE, $sprite.top + CORRECT_TVALUE );
+		}
 	};
 	
 	Painter.prototype.advance = function() {
