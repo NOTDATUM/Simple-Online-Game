@@ -256,7 +256,7 @@
 				}
 			}
 
-			$context.putImageData( imageData, $sprite.left + + CORRECT_LVALUE, $sprite.top + CORRECT_TVALUE );
+			$context.putImageData( imageData, $sprite.left + CORRECT_LVALUE, $sprite.top + CORRECT_TVALUE );
 		}
 	};
 	
@@ -273,12 +273,12 @@
 		
 		move = function() {};
 		move.prototype.execute = function( $sprite, $data, $time ) {
-			$sprite.left += $data.speedV;
-			$sprite.top += $data.speedH;
+			$sprite.left = $data.left;
+			$sprite.top = $data.top;
 		};
 		
 		next = function() {
-			this.interval = 40;
+			this.interval = 50;
 			this.lastTime = 0;
 		};
 		next.prototype.execute = function( $sprite, $data, $time ) {
@@ -338,10 +338,10 @@
 		exit = document.getElementById( 'exit' ),
 		context = document.getElementById( 'canvas' ).getContext( '2d' ),
 		keyInfo = {
-			'38' : { speedV : 0, speedH : -1, direction : 'UP', status : 'MOVE' },
-			'40' : { speedV : 0, speedH : 1, direction : 'DOWN', status : 'MOVE' },
-			'37' : { speedV : -1, speedH : 0, direction : 'LEFT', status : 'MOVE' },
-			'39' : { speedV : 1, speedH : 0, direction : 'RIGHT', status : 'MOVE' },
+			'38' : { speedV : 0, speedH : -2, direction : 'UP', status : 'MOVE' },
+			'40' : { speedV : 0, speedH : 2, direction : 'DOWN', status : 'MOVE' },
+			'37' : { speedV : -2, speedH : 0, direction : 'LEFT', status : 'MOVE' },
+			'39' : { speedV : 2, speedH : 0, direction : 'RIGHT', status : 'MOVE' },
 			'32' : { speedV : 0, speedH : 0, direction : 'DOWN', status : 'ATTACK' }
 		};
 		
@@ -355,13 +355,53 @@
 				if ( data.status === 'ATTACK' ) {
 					data.direction = sog.sprite.p1.data.direction;
 				}
-				sog.server.update( data );
+				if ( collision( data ) ) {
+					sog.server.update( data );
+				}
 			}
 		}, false );
+
+		function collision( $data ) {
+			var
+			p2 = sog.sprite.p2, p2Left, p2Right, p2Top, p2Bottom,
+			p1 = sog.sprite.p1,
+			nextLeft = p1.left + CORRECT_LVALUE + $data.speedV,
+			nextRight = nextLeft + CHARACTER_SIZE - CORRECT_LVALUE * 2,
+			nextTop = p1.top + CORRECT_TVALUE + $data.speedH,
+			nextBottom = nextTop + CHARACTER_SIZE - CORRECT_LVALUE - CORRECT_TVALUE,
+			event = document.createEvent( 'HTMLEvents' );
+			
+			event.initEvent( 'keyup', true, false );
+
+			// 1. 벽
+			if ( nextLeft < 0 || nextRight > sog.context.canvas.width || nextTop < 0 || nextBottom > sog.context.canvas.height ) {
+				p1.data.direction = $data.direction;
+				document.dispatchEvent( event );
+				return false;
+			}
+
+			// 2. 캐릭터
+			if ( p2 ) {
+				p2Left = p2.left + CORRECT_LVALUE;
+				p2Right = p2Left + CHARACTER_SIZE - CORRECT_LVALUE * 2;
+				p2Top = p2.top + CORRECT_TVALUE;
+				p2Bottom = p2Top + CHARACTER_SIZE - CORRECT_LVALUE - CORRECT_TVALUE;
+
+				if ( ( nextLeft >= p2Left && nextLeft <= p2Right || nextRight >= p2Left && nextRight <= p2Right ) &&
+					 ( nextTop >= p2Top && nextTop <= p2Bottom || nextBottom >= p2Top && nextBottom <= p2Bottom ) ) {
+					p1.data.direction = $data.direction;
+					document.dispatchEvent( event );
+					return false;
+				}
+			}
+
+			// 3. 공격
+
+			return true;
+		}
 		
 		document.addEventListener( 'keyup', function( $event ) {
-			var sprite = sog.sprite.p1;
-			sog.server.update( { speedV : 0, speedH : 0, direction : sprite.data.direction, status : 'STAY' } );
+			sog.server.update( { speedV : 0, speedH : 0, direction : sog.sprite.p1.data.direction, status : 'STAY' } );
 		}, false );
 		
 		moveUp.src = 'static/img/moveUp.png';
