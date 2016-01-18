@@ -363,12 +363,13 @@
 
 		function collision( $data ) {
 			var
+			p1 = sog.sprite.p1, p1Left, p1Right, p1Top, p1Bottom,
 			p2 = sog.sprite.p2, p2Left, p2Right, p2Top, p2Bottom,
-			p1 = sog.sprite.p1,
 			nextLeft = p1.left + CORRECT_LVALUE + $data.speedV,
 			nextRight = nextLeft + CHARACTER_SIZE - CORRECT_LVALUE * 2,
 			nextTop = p1.top + CORRECT_TVALUE + $data.speedH,
 			nextBottom = nextTop + CHARACTER_SIZE - CORRECT_LVALUE - CORRECT_TVALUE,
+			attackLeft, attackRight, attackTop, attackBottom,
 			event = document.createEvent( 'HTMLEvents' );
 			
 			event.initEvent( 'keyup', true, false );
@@ -396,6 +397,39 @@
 			}
 
 			// 3. 공격
+			if ( $data.status === 'ATTACK' && p2 ) {
+				p1Left = nextLeft - $data.speedV,
+				p1Right = nextRight - $data.speedV,
+				p1Top = nextTop - $data.speedH,
+				p1Bottom = nextTop - $data.speedH,
+				attackLeft = p1.left,
+				attackRight = attackLeft + CHARACTER_SIZE,
+				attackTop = p1.top + CORRECT_TVALUE / 2 + 5,
+				attackBottom = attackTop + CHARACTER_SIZE - ( CORRECT_TVALUE / 2 + 5 ) * 2;
+
+				switch ( $data.direction ) {
+				case 'UP':
+					if ( p1Left >= p2Left && p1Left <= p2Right && p1Top >= p2Bottom && attackTop <= p2Bottom ) {
+						alert( 'Success attack!' );
+					}
+					break;
+				case 'DOWN':
+					if ( p1Right >= p2Left && p1Right <= p2Right && p1Bottom <= p2Top && attackBottom >= p2Top ) {
+						alert( 'Success attack!' );
+					}
+					break;
+				case 'LEFT':
+					if ( attackTop <= p2Top && attackBottom >= p2Bottom && p1Left >= p2Right && attackLeft <= p2Right ) {
+						alert( 'Success attack!' );
+					}
+					break;
+				case 'RIGHT':
+					if ( attackTop <= p2Top && attackBottom >= p2Bottom && p1Right <= p2Left && attackRight >= p2Left ) {
+						alert( 'Success attack!' );
+					}
+					break;
+				}
+			}
 
 			return true;
 		}
