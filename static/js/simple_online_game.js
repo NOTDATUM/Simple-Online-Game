@@ -129,7 +129,7 @@
 					return false;
 				}
 
-				// Atack
+				// Attack
 				if ( $data.status === 'ATTACK' ) {
 					if ( ( $data.direction === 'UP' && p1Left >= p2Left && p1Left <= p2Right && p1Top >= p2Bottom && attackTop <= p2Bottom ) ||
 						 ( $data.direction === 'DOWN' && p1Right >= p2Left && p1Right <= p2Right && p1Bottom <= p2Top && attackBottom >= p2Top ) ||
@@ -424,7 +424,7 @@
 		
 		document.addEventListener( 'keydown', function( $event ) {
 			if ( $event.keyCode in keyInfo ) {
-				var data = keyInfo[ $event.keyCode ];
+				var data = $util.clone( keyInfo[ $event.keyCode ] );
 				if ( data.status === 'ATTACK' ) {
 					data.direction = sog.sprite.p1.data.direction;
 				}

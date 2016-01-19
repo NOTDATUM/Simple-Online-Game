@@ -113,6 +113,10 @@ var $util = ( function() {
 			if ( $target.dispatchEvent ) {
 				$target.dispatchEvent( event );
 			}
+		},
+
+		clone : function( $target ) {
+			return JSON.parse( JSON.stringify( $target ) );
 		}
 	};
 } )();
