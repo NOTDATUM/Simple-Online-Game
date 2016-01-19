@@ -105,6 +105,14 @@ var $util = ( function() {
 			if ( _queue.length === 1 ) {
 				_queue[ 0 ]();
 			}
+		},
+
+		fireEvent : function( $target, $eventName ) {
+			var event = document.createEvent( 'HTMLEvents' );
+			event.initEvent( $eventName, true, false );
+			if ( $target.dispatchEvent ) {
+				$target.dispatchEvent( event );
+			}
 		}
 	};
 } )();

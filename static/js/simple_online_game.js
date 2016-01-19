@@ -85,6 +85,64 @@
 			delete $sprite.actors[ name ];
 		}
 	}
+
+	function collision( $data ) {
+		var
+		p1 = sog.sprite.p1,
+		p1Left = p1.left + CORRECT_LVALUE,
+		p1Right = p1Left + CHARACTER_SIZE - CORRECT_LVALUE * 2,
+		p1Top = p1.top + CORRECT_TVALUE,
+		p1Bottom = p1Top + CHARACTER_SIZE - CORRECT_LVALUE - CORRECT_TVALUE,		
+		
+		nextLeft = p1Left + $data.speedV,
+		nextRight = p1Right + $data.speedV,
+		nextTop = p1Top + $data.speedH,
+		nextBottom = p1Bottom + $data.speedH,
+
+		attackLeft = p1.left,
+		attackRight = attackLeft + CHARACTER_SIZE,
+		attackTop = p1.top + CORRECT_TVALUE / 2 + 5,
+		attackBottom = attackTop + CHARACTER_SIZE - ( CORRECT_TVALUE / 2 + 5 ) * 2,
+
+		p2 = sog.sprite.p2, p2Left, p2Right, p2Top, p2Bottom;
+		
+		// Wall
+		if ( nextLeft < 0 || nextRight > sog.context.canvas.width || nextTop < 0 || nextBottom > sog.context.canvas.height ) {
+			p1.data.direction = $data.direction;
+			$util.fireEvent( document, 'keyup' );
+			return false;
+		}
+
+		if ( p2 ) {
+			p2Left = p2.left + CORRECT_LVALUE;
+			p2Right = p2Left + CHARACTER_SIZE - CORRECT_LVALUE * 2;
+			p2Top = p2.top + CORRECT_TVALUE;
+			p2Bottom = p2Top + CHARACTER_SIZE - CORRECT_LVALUE - CORRECT_TVALUE;
+
+			if ( ! ( ( p1Left >= p2Left && p1Left <= p2Right || p1Right >= p2Left && p1Right <= p2Right ) &&
+				 	 ( p1Top >= p2Top && p1Top <= p2Bottom || p1Bottom >= p2Top && p1Bottom <= p2Bottom ) ) ) {
+				// Charactor
+				if ( ( nextLeft >= p2Left && nextLeft <= p2Right || nextRight >= p2Left && nextRight <= p2Right ) &&
+					 ( nextTop >= p2Top && nextTop <= p2Bottom || nextBottom >= p2Top && nextBottom <= p2Bottom ) ) {
+					p1.data.direction = $data.direction;
+					$util.fireEvent( document, 'keyup' );
+					return false;
+				}
+
+				// Atack
+				if ( $data.status === 'ATTACK' ) {
+					if ( ( $data.direction === 'UP' && p1Left >= p2Left && p1Left <= p2Right && p1Top >= p2Bottom && attackTop <= p2Bottom ) ||
+						 ( $data.direction === 'DOWN' && p1Right >= p2Left && p1Right <= p2Right && p1Bottom <= p2Top && attackBottom >= p2Top ) ||
+						 ( $data.direction === 'LEFT' && attackTop <= p2Top && attackBottom >= p2Bottom && p1Left >= p2Right && attackLeft <= p2Right ) ||
+						 ( $data.direction === 'RIGHT' && attackTop <= p2Top && attackBottom >= p2Bottom && p1Right <= p2Left && attackRight >= p2Left ) ) {
+							$data.attackStatus = 'success';
+					}
+				}
+			}
+		}
+
+		return true;
+	}
 	
 	Game = function( $params ) {
 		this.context = $params.context;
@@ -110,6 +168,10 @@
 
 	Game.prototype.dataCB = function( $data, $time ) {
 		var p2, id;
+
+		if ( $data[ this.server.userId ].energy < 1 ) {
+			this.server.exit();
+		}
 
 		this.context.clearRect( 0, 0, this.context.canvas.width, this.context.canvas.height );
 		setSpriteData( this.sprite.p1, $data[ this.server.userId ] );
@@ -186,7 +248,8 @@
 			left : sog.sprite.p1.left + $data.speedV,
 			top : sog.sprite.p1.top + $data.speedH,
 			direction : $data.direction,
-			status : $data.status
+			status : $data.status,
+			attackStatus : $data.attackStatus || 'none'
 		} ) );
 	};
 	
@@ -237,14 +300,14 @@
 			$sprite.left, $sprite.top, this.image.width, this.image.height
 		);
 
-		if ( $sprite === sog.sprite.p2 ) {
-			imageData = $context.getImageData(
-				$sprite.left + CORRECT_LVALUE,
-				$sprite.top + CORRECT_TVALUE,
-				this.image.width - CORRECT_LVALUE * 2,
-				this.image.height - CORRECT_LVALUE - CORRECT_TVALUE
-			);
+		imageData = $context.getImageData(
+			$sprite.left + CORRECT_LVALUE,
+			$sprite.top + CORRECT_TVALUE,
+			this.image.width - CORRECT_LVALUE * 2,
+			this.image.height - CORRECT_LVALUE - CORRECT_TVALUE
+		);
 
+		if ( $sprite === sog.sprite.p2 ) {
 			for ( i = 0; i < imageData.data.length; i += 4 ) {
 				r = imageData.data[ i ],
 				g = imageData.data[ i + 1 ],
@@ -254,6 +317,16 @@
 					imageData.data[ i ] = b;
 					imageData.data[ i + 2 ] = r;
 				}
+			}
+
+			$context.putImageData( imageData, $sprite.left + CORRECT_LVALUE, $sprite.top + CORRECT_TVALUE );
+		}
+
+		var target = $sprite === sog.sprite.p1 ? sog.sprite.p2 : sog.sprite.p1;
+
+		if ( target && target.data.attackStatus === 'success' ) {
+			for ( i = 3; i < imageData.data.length; i += 4 ) {
+				imageData.data[ i ] = imageData.data[ i ] / 2;
 			}
 
 			$context.putImageData( imageData, $sprite.left + CORRECT_LVALUE, $sprite.top + CORRECT_TVALUE );
@@ -361,79 +434,6 @@
 			}
 		}, false );
 
-		function collision( $data ) {
-			var
-			p1 = sog.sprite.p1, p1Left, p1Right, p1Top, p1Bottom,
-			p2 = sog.sprite.p2, p2Left, p2Right, p2Top, p2Bottom,
-			nextLeft = p1.left + CORRECT_LVALUE + $data.speedV,
-			nextRight = nextLeft + CHARACTER_SIZE - CORRECT_LVALUE * 2,
-			nextTop = p1.top + CORRECT_TVALUE + $data.speedH,
-			nextBottom = nextTop + CHARACTER_SIZE - CORRECT_LVALUE - CORRECT_TVALUE,
-			attackLeft, attackRight, attackTop, attackBottom,
-			event = document.createEvent( 'HTMLEvents' );
-			
-			event.initEvent( 'keyup', true, false );
-
-			// 1. 벽
-			if ( nextLeft < 0 || nextRight > sog.context.canvas.width || nextTop < 0 || nextBottom > sog.context.canvas.height ) {
-				p1.data.direction = $data.direction;
-				document.dispatchEvent( event );
-				return false;
-			}
-
-			// 2. 캐릭터
-			if ( p2 ) {
-				p2Left = p2.left + CORRECT_LVALUE;
-				p2Right = p2Left + CHARACTER_SIZE - CORRECT_LVALUE * 2;
-				p2Top = p2.top + CORRECT_TVALUE;
-				p2Bottom = p2Top + CHARACTER_SIZE - CORRECT_LVALUE - CORRECT_TVALUE;
-
-				if ( ( nextLeft >= p2Left && nextLeft <= p2Right || nextRight >= p2Left && nextRight <= p2Right ) &&
-					 ( nextTop >= p2Top && nextTop <= p2Bottom || nextBottom >= p2Top && nextBottom <= p2Bottom ) ) {
-					p1.data.direction = $data.direction;
-					document.dispatchEvent( event );
-					return false;
-				}
-			}
-
-			// 3. 공격
-			if ( $data.status === 'ATTACK' && p2 ) {
-				p1Left = nextLeft - $data.speedV,
-				p1Right = nextRight - $data.speedV,
-				p1Top = nextTop - $data.speedH,
-				p1Bottom = nextTop - $data.speedH,
-				attackLeft = p1.left,
-				attackRight = attackLeft + CHARACTER_SIZE,
-				attackTop = p1.top + CORRECT_TVALUE / 2 + 5,
-				attackBottom = attackTop + CHARACTER_SIZE - ( CORRECT_TVALUE / 2 + 5 ) * 2;
-
-				switch ( $data.direction ) {
-				case 'UP':
-					if ( p1Left >= p2Left && p1Left <= p2Right && p1Top >= p2Bottom && attackTop <= p2Bottom ) {
-						alert( 'Success attack!' );
-					}
-					break;
-				case 'DOWN':
-					if ( p1Right >= p2Left && p1Right <= p2Right && p1Bottom <= p2Top && attackBottom >= p2Top ) {
-						alert( 'Success attack!' );
-					}
-					break;
-				case 'LEFT':
-					if ( attackTop <= p2Top && attackBottom >= p2Bottom && p1Left >= p2Right && attackLeft <= p2Right ) {
-						alert( 'Success attack!' );
-					}
-					break;
-				case 'RIGHT':
-					if ( attackTop <= p2Top && attackBottom >= p2Bottom && p1Right <= p2Left && attackRight >= p2Left ) {
-						alert( 'Success attack!' );
-					}
-					break;
-				}
-			}
-
-			return true;
-		}
-		
 		document.addEventListener( 'keyup', function( $event ) {
 			sog.server.update( { speedV : 0, speedH : 0, direction : sog.sprite.p1.data.direction, status : 'STAY' } );
 		}, false );

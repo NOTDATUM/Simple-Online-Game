@@ -330,22 +330,29 @@ def message_received(client, server, message):
 	oper, data = message.split( '::' )
 	data = json.loads( data )
 
-	if ( oper == 'register' ):
-		if ( len( g_data ) == 2 ):
+	if oper == 'register':
+		if len( g_data ) == 2:
 			server.send_message( client, json.dumps( { 'code' : -1, 'message' : 'Many peoples' } ) )
 			return
 		print("Register client : " + str( client['id'] ) )
-		g_data[ client['id'] ] = { 'speedV' : 0, 'speedH' : 0, 'left' : 0, 'top' : 0, 'direction' : 'DOWN', 'status' : 'STAY' }
+		g_data[ client['id'] ] = { 'speedV' : 0, 'speedH' : 0, 'left' : 0, 'top' : 0, 'direction' : 'DOWN', 'status' : 'STAY', 'attackStatus' : 'none', 'energy' : 30 }
 		server.send_message( client, json.dumps( { 'code' : 0, 'message' : 'success', 'data' : { 'userId' : client['id'] }, 'status' : 'register' } ) )
-	elif ( oper == 'data' ):
+	elif oper == 'data':
 		server.send_message( client, json.dumps( { 'code' : 0, 'message' : 'success', 'data' : g_data, 'time' : data[ 'time' ], 'status' : 'data' } ) )
-	elif ( oper == 'update' ):
+	elif oper == 'update':
 		g_data[ client['id'] ][ 'speedV' ] = data[ 'speedV' ]
 		g_data[ client['id'] ][ 'speedH' ] = data[ 'speedH' ]
 		g_data[ client['id'] ][ 'left' ] = data[ 'left' ]
 		g_data[ client['id'] ][ 'top' ] = data[ 'top' ]
 		g_data[ client['id'] ][ 'direction' ] = data[ 'direction' ]
 		g_data[ client['id'] ][ 'status' ] = data[ 'status' ]
+		g_data[ client['id'] ][ 'attackStatus' ] = data[ 'attackStatus' ]
+
+		if data[ 'attackStatus' ] == 'success':
+			for key in g_data.keys():
+				if key != client[ 'id' ]:
+					g_data[ key ][ 'energy' ] = g_data[ key ][ 'energy' ] - 1
+
 		server.send_message( client, json.dumps( { 'code' : 0, 'message' : 'success', 'status' : 'update' } ) )
 
 PORT=8080
