@@ -260,7 +260,8 @@ class WebSocketHandler(StreamRequestHandler): # rfile을 쓰기 위함인 듯, �
 		self.handshake_done = self.request.send(response.encode()) # 뭘 주는지 나중에 잘 보자
 		self.valid_client = True
 		self.server._new_client_(self)
-		
+	
+	# http://ohgyun.com/436 참조	
 	def make_handshake_response(self, key):
 		return \
 		  'HTTP/1.1 101 Switching Protocols\r\n'\
