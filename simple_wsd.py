@@ -365,3 +365,43 @@ server.set_fn_new_client(new_client)
 server.set_fn_client_left(client_left)
 server.set_fn_message_received(message_received)
 server.run_forever()
+
+"""
+WebsocketServer(ThreadingMixIn, TCPServer):
+	# 클라이언트가 접속 중 일때 서버를 재시작하고 다시 접속하면 "이미 사용 중" 오류, 서버는 죽어어도 소켓은 대기로 살아있기 때문. 이 값을 True로 하면 유휴중인 소켓을 다시 사용하여 정상 작동함.
+	allow_reuse_address = True
+
+	# True 일 때, 메인 프로세스가 종료되어도 데몬 쓰레드는 백그라운드에서 계속 진행됨(예, 가비지 컬렉션), 따라서 서버가 중지되어도 실행 중인 처리는 마무리 됨.
+	daemon_threads = True
+
+	# clients 관리
+	clients = []
+
+	# TCPServer.__init__ 호출; 파라미터 host(0.0.0.0 전체허용), WebsocketRequestHandler
+	def __init__
+	
+	def inClient
+	def outClient
+	def reciveMessage
+
+# 스트림 형태의 request를 읽어 들여 처리하기 위함(즉, 그 결과물인 self.rfile을 쓰기 위함)
+# rfile은 socket.makefile의 결과물
+# self.request = socket
+WebsocketRequestHandler(StreamRequestHandler)
+	# StreamRequestHandler.__init__ 호출
+	def __init__
+	
+	# override; StreamRequestHandler.setup 호출 및 초기값 셋팅
+	def setup
+
+	# override; 루프 메서드
+	def handle
+
+	# override
+	def finish
+	
+	# Websocket 핵심 메서드 3개(Websocket 스펙 참조하여 개발)
+	def sendMessage
+	def receiveMessage
+	def handshake
+"""
