@@ -137,7 +137,7 @@ class WebSocketHandler(StreamRequestHandler): # rfile을 쓰기 위함인 듯, �
 		StreamRequestHandler.__init__(self, socket, addr, server)
  
 	def setup(self):
-		StreamRequestHandler.setup(self)
+		StreamRequestHandler.setup(self) # 여기서 rfile, wfile 이 셋팅 됨
 		self.keep_alive = True
 		self.handshake_done = False
 		self.valid_client = False
