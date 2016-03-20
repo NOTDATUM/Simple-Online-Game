@@ -27,7 +27,6 @@ class WebsocketServer( ThreadingMixIn, TCPServer ):
 		print( 'In client ' + str( self.client_id ) )
 
 	def out_client( self, handler ):
-		print( self.clients )
 		for client in self.clients:
 			if client[ 'handler' ] == handler:
 				self.clients.remove( client )
