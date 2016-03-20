@@ -67,11 +67,8 @@ class WebsocketServer( ThreadingMixIn, TCPServer ):
 			handler.send_message( json.dumps( { 'code' : 0, 'message' : 'success', 'status' : 'update' } ) )
 
 class WebsocketRequestHandler( BaseRequestHandler ):
-	def __init__( self, request, client_address, server ):
-		BaseRequestHandler.__init__( self, request, client_address, server )
-		self.server = server
-
 	def setup( self ):
+		self.socket = self.request
 		self.is_valid = True
 		self.is_handshake = False
 
@@ -86,7 +83,7 @@ class WebsocketRequestHandler( BaseRequestHandler ):
 		self.server.out_client( self )
 
 	def handshake( self ):
-		header = self.request.recv( 1024 ).decode().strip()
+		header = self.socket.recv( 1024 ).decode().strip()
 		request_key = ''
 
 		for each in header.split( '\r\n' ):
@@ -110,7 +107,7 @@ class WebsocketRequestHandler( BaseRequestHandler ):
 			'Sec-WebSocket-Accept: %s\r\n'\
 			'\r\n' % response_key
 
-		self.is_handshake = self.request.send( response.encode() )
+		self.is_handshake = self.socket.send( response.encode() )
 		self.server.in_client( self )
 		print( 'Handshake OK!' )
 
@@ -133,10 +130,10 @@ class WebsocketRequestHandler( BaseRequestHandler ):
 			print( 'Not valid send payload_length' )
 			return
 
-		self.request.send( header + payload )
+		self.socket.send( header + payload )
 
 	def receive_message( self ):
-		byte1, byte2 = self.request.recv( 2 )
+		byte1, byte2 = self.socket.recv( 2 )
 
 		fin = byte1 & 128
 		opcode = byte1 & 15
@@ -148,12 +145,12 @@ class WebsocketRequestHandler( BaseRequestHandler ):
 			return
 
 		if payload_length == 126:
-			payload_length = struct.unpack( '>H', self.request.recv( 2 ) )[ 0 ]
+			payload_length = struct.unpack( '>H', self.socket.recv( 2 ) )[ 0 ]
 		elif payload_length == 127:
-			payload_length = struct.unpack( '>Q', self.request.recv( 4 ) )[ 0 ]
+			payload_length = struct.unpack( '>Q', self.socket.recv( 4 ) )[ 0 ]
 
-		masks = self.request.recv( 4 )
-		payload = self.request.recv( payload_length )
+		masks = self.socket.recv( 4 )
+		payload = self.socket.recv( payload_length )
 		message = ''
 
 		for byte in payload:
