@@ -98,7 +98,7 @@ class WebsocketRequestHandler( BaseRequestHandler ):
 			print( 'Not valid handshake request_key' )
 			return
 
-		response_key = b64encode( sha1( request_key.encode() + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'.encode() ).digest() ).strip().decode( 'ASCII' )
+		response_key = b64encode( sha1( request_key.encode() + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'.encode() ).digest() ).strip().decode()
 		response = \
 			'HTTP/1.1 101 Switching Protocols\r\n'\
 			'Upgrade: websocket\r\n'\
@@ -134,7 +134,6 @@ class WebsocketRequestHandler( BaseRequestHandler ):
 	def receive_message( self ):
 		byte1, byte2 = self.socket.recv( 2 )
 
-		fin = byte1 & 128
 		opcode = byte1 & 15
 		is_mask = byte2 & 128
 		payload_length = byte2 & 127
