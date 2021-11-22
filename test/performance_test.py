@@ -4,7 +4,7 @@ import time, threading, urllib.request
 
 def stress_test():
 	for i in range( 1, 100 ):
-		f = urllib.request.urlopen( 'http://192.168.123.109:8000/test' )
+		f = urllib.request.urlopen( 'https://notdatum.github.io/Simple-Online-Game/test' )
 		print( f.readline() )
 		f.close()
 
